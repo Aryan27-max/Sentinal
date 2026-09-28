@@ -52,22 +52,22 @@ Sentinel tails a live, growing log file and learns what "normal" looks like for 
 
 ---
 
-## ✨ Why Sentinel stands out
+##  Why Sentinel stands out
 
 Most log alerting relies on hand-tuned static thresholds: *page me if errors pass 5%*. Those are wrong for every service and every hour of the day. Sentinel learns the baseline for each service and alerts on **statistically meaningful change**, and every alert shows its evidence.
 
 | | What it does | Why it matters |
 |---|---|---|
-| 🎛️ **Live Chaos Panel** | Press a button to inject a DB outage, a latency spike or a silent service into live traffic | Judges can watch detection happen instead of taking our word for it |
-| 🔍 **Explainable alerts** | Every alert carries the current value, baseline median, MAD, z-score and 3 real log lines | You can see *why* it fired, not just that something is wrong |
-| 📐 **Robust statistics, no black box** | Rolling median + MAD with a robust z-score | One outlier can't skew the baseline, and the maths fits on one slide |
-| 🛡️ **Baseline that can't be poisoned** | Anomalous values are never learned | A long incident doesn't become the new normal |
-| 🔕 **No alert storms** | Volume and absolute-rise guards, plus a 30 s cooldown per (service, detector) that still lets escalations through | "1 error in 3 lines = 33%" never pages anyone, and severity climbs LOW → MEDIUM → HIGH once |
-| ⚡ **Fast in, fast out** | Detects on a 60 s window and clears on the latest 15 s | Alerts fire within ~5 s and stop within ~15 s of recovery |
-| 🤫 **Silence detection** | Flags a service that stops logging | A service that stops logging produces no errors, so rate checks miss it. This detector doesn't |
-| 🧱 **Never blocks** | File I/O and AWS calls run off the event loop, and sinks drain a queue with retry and backoff | A slow AWS call or a dead browser tab can't stall detection |
-| 📱 **SMS-ready** | SNS messages fit in one SMS, e.g. `Sentinel HIGH: payment-service error rate 11.4% vs 2.7% z=11.8` | The phone alert is readable at a glance |
-| 🚀 **One-click cloud deploy** | A single Docker image serves the API, WebSocket and dashboard from one origin | Push to GitHub, deploy on Railway, done |
+|  **Live Chaos Panel** | Press a button to inject a DB outage, a latency spike or a silent service into live traffic | Judges can watch detection happen instead of taking our word for it |
+|  **Explainable alerts** | Every alert carries the current value, baseline median, MAD, z-score and 3 real log lines | You can see *why* it fired, not just that something is wrong |
+|  **Robust statistics, no black box** | Rolling median + MAD with a robust z-score | One outlier can't skew the baseline, and the maths fits on one slide |
+|  **Baseline that can't be poisoned** | Anomalous values are never learned | A long incident doesn't become the new normal |
+|  **No alert storms** | Volume and absolute-rise guards, plus a 30 s cooldown per (service, detector) that still lets escalations through | "1 error in 3 lines = 33%" never pages anyone, and severity climbs LOW → MEDIUM → HIGH once |
+|  **Fast in, fast out** | Detects on a 60 s window and clears on the latest 15 s | Alerts fire within ~5 s and stop within ~15 s of recovery |
+|  **Silence detection** | Flags a service that stops logging | A service that stops logging produces no errors, so rate checks miss it. This detector doesn't |
+|  **Never blocks** | File I/O and AWS calls run off the event loop, and sinks drain a queue with retry and backoff | A slow AWS call or a dead browser tab can't stall detection |
+|  **SMS-ready** | SNS messages fit in one SMS, e.g. `Sentinel HIGH: payment-service error rate 11.4% vs 2.7% z=11.8` | The phone alert is readable at a glance |
+|  **One-click cloud deploy** | A single Docker image serves the API, WebSocket and dashboard from one origin | Push to GitHub, deploy on Railway, done |
 
 ### Measured on a live run
 
@@ -80,7 +80,7 @@ Most log alerting relies on hand-tuned static thresholds: *page me if errors pas
 
 ---
 
-## 🏗️ System design
+##  System design
 
 The generator writes to a **real file** and the detector reads that **real file**. Nothing takes a shortcut from generator to detector, so the pipeline behaves the same way it would on a production log.
 
@@ -128,7 +128,7 @@ flowchart TB
 
 ---
 
-## 📐 How detection works
+##  How detection works
 
 Each service (plus an aggregate `all` series) keeps **5 s buckets** keyed on event time. Every 5 s, Sentinel sums the last 12 buckets into a **60 s sliding window** and computes the error rate and p95 latency.
 
@@ -180,7 +180,7 @@ flowchart TD
 
 ---
 
-## 🎬 90-second demo
+##  90-second demo
 
 ```mermaid
 sequenceDiagram
@@ -219,7 +219,7 @@ sequenceDiagram
 
 ---
 
-## 🚀 Quick start
+##  Quick start
 
 Requires **Python 3.11+** and **Node 20+**. Use two terminals.
 
@@ -252,29 +252,7 @@ The tests cover the tailer (appends, partial lines, truncation, rotation), the p
 
 ---
 
-## ☁️ Deploy to Railway
-
-The repo deploys as **one service**. The [Dockerfile](Dockerfile) builds the React app in a Node stage, and a slim Python 3.11 stage serves it with FastAPI alongside `/api` and `/ws` on Railway's `$PORT`. [railway.json](railway.json) configures the Dockerfile builder, a `/api/health` healthcheck, restart on failure and **1 replica**, because detector state lives in process memory.
-
-1. Push the repo to GitHub.
-2. In Railway, choose **New Project → Deploy from GitHub repo** and pick this repo.
-3. Under **Settings → Networking**, click **Generate Domain**.
-4. *(Optional, for real alerts)* add these under **Variables**:
-
-| Variable | Value |
-|---|---|
-| `DRY_RUN` | `false` |
-| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | IAM user allowed `sns:Publish`, `logs:CreateLogGroup`, `logs:CreateLogStream`, `logs:PutLogEvents` |
-| `AWS_REGION` | e.g. `ap-south-1` |
-| `SNS_TOPIC_ARN` | your topic; subscribe your phone number for SMS |
-
-**CLI alternative:** `npm i -g @railway/cli && railway login && railway init && railway up`
-
-**Local image:** `docker build -t sentinel . && docker run -p 8000:8000 sentinel`, then open http://localhost:8000
-
----
-
-## ⚙️ Configuration
+##  Configuration
 
 Every threshold lives in [`backend/app/config.py`](backend/app/config.py) and can be overridden with an environment variable or a `.env` file. See [`.env.example`](.env.example).
 
@@ -294,7 +272,7 @@ Every threshold lives in [`backend/app/config.py`](backend/app/config.py) and ca
 
 ---
 
-## 🔌 API
+##  API
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -308,7 +286,7 @@ Every WebSocket message uses the same envelope: `{ "type": "...", "data": { ... 
 
 ---
 
-## 🗂️ Project structure
+##  Project structure
 
 ```
 ├── Dockerfile · railway.json · .env.example
@@ -334,7 +312,7 @@ Every WebSocket message uses the same envelope: `{ "type": "...", "data": { ... 
 
 ---
 
-## 🧭 Roadmap
+##  Roadmap
 
 - **Incidents:** group related alerts into one incident with auto-resolve and correlation across services
 - **Plain-English summaries:** an LLM narrator that only restates the measured numbers, with a deterministic template fallback
