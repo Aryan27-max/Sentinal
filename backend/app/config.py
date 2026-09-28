@@ -1,0 +1,71 @@
+"""All tunables for Sentinel. Detectors read thresholds from here, never from literals.
+
+Values come from environment variables or a `.env` file (repo root, then backend/),
+matching ARCHITECTURE.md §14. Relative paths are resolved against backend/.
+"""
+
+from functools import lru_cache
+from pathlib import Path
+
+from pydantic import SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+REPO_ROOT = BACKEND_DIR.parent
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=(REPO_ROOT / ".env", BACKEND_DIR / ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    # ingest
+    log_path: Path = Path("../data/logs/app.log")
+    tail_poll_ms: int = 200
+    tail_from_start: bool = False
+
+    # sliding window + baseline
+    bucket_seconds: int = 5
+    window_seconds: int = 60
+    baseline_points: int = 60
+    warmup_points: int = 12
+    mad_floor: float = 0.005
+
+    # detectors + severity
+    z_low: float = 3.0
+    z_medium: float = 5.0
+    z_high: float = 8.0
+    critical_error_rate: float = 0.5
+    min_volume: int = 20
+    min_abs_delta: float = 0.02
+    silence_seconds: float = 15.0
+
+    # incidents
+    resolve_ticks: int = 3
+    correlation_seconds: float = 20.0
+
+    # generator
+    generator_enabled: bool = True
+    generator_rate: float = 40.0
+
+    # sinks
+    dry_run: bool = True
+    aws_region: str = "ap-south-1"
+    sns_topic_arn: str = ""
+    cw_log_group: str = "/sentinel/alerts"
+    cw_log_stream: str = "demo"
+
+    # narrator
+    anthropic_api_key: SecretStr = SecretStr("")
+
+    @property
+    def resolved_log_path(self) -> Path:
+        path = self.log_path
+        return path if path.is_absolute() else (BACKEND_DIR / path).resolve()
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
