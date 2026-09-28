@@ -93,3 +93,16 @@ def test_silence_fires_critical() -> None:
         alerts += fired
     silence = [a for a in alerts if a.detector == "silence"]
     assert len(silence) == 1 and silence[0].severity == "CRITICAL"
+
+
+def test_alerts_stop_soon_after_recovery() -> None:
+    random.seed(7)
+    det = Detector(settings())
+    run(det, 30, 0, "payment-service", 50, 0.02)
+    assert run(det, 9, 30, "payment-service", 50, 0.40), "spike fires"
+    run(det, 4, 39, "payment-service", 50, 0.02)  # 20 s of normal traffic
+    # the 60 s window still holds the spike, but the latest 15 s are normal
+    metrics, alerts = det.evaluate(T0 + 43 * BUCKET + BUCKET - 0.01)
+    assert metrics["payment-service"]["error_rate"] > 0.1
+    assert not metrics["payment-service"]["anomalous"]
+    assert alerts == []

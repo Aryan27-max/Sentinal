@@ -130,7 +130,9 @@ class Detector:
     def evaluate(self, now: float | None = None) -> tuple[dict[str, dict[str, Any]], list[Alert]]:
         """Run one tick. Returns per-series metrics and any alerts raised."""
         now = time.time() if now is None else now
-        first_key = int(now // self.s.bucket_seconds) - self.n_buckets + 1
+        now_key = int(now // self.s.bucket_seconds)
+        first_key = now_key - self.n_buckets + 1
+        recent_key = now_key - self.s.recent_buckets + 1
         metrics: dict[str, dict[str, Any]] = {}
         alerts: list[Alert] = []
 
@@ -141,6 +143,9 @@ class Detector:
             total = sum(b.total for b in buckets)
             errors = sum(b.errors for b in buckets)
             latencies = [x for b in buckets for x in b.latencies]
+            recent = [b for k, b in series.buckets.items() if k >= recent_key]
+            recent_total = sum(b.total for b in recent)
+            recent_latencies = [x for b in recent for x in b.latencies]
             can_alert = name != ALL
 
             m: dict[str, Any] = {"volume": total, "silent": False, "anomalous": False}
@@ -151,6 +156,7 @@ class Detector:
                 er_value,
                 total,
                 self.s.min_abs_delta,
+                recent=sum(b.errors for b in recent) / recent_total if recent_total else None,
                 now=now,
                 name=name,
                 series=series,
@@ -172,6 +178,7 @@ class Detector:
                 p95_value,
                 len(latencies),
                 self.s.latency_min_abs_delta_ms,
+                recent=p95(recent_latencies) if recent_latencies else None,
                 now=now,
                 name=name,
                 series=series,
@@ -225,6 +232,7 @@ class Detector:
         volume: int,
         min_abs_delta: float,
         *,
+        recent: float | None,
         now: float,
         name: str,
         series: Series,
@@ -232,21 +240,31 @@ class Detector:
         can_alert: bool,
         alerts: list[Alert],
     ) -> dict[str, Any]:
-        """Score one metric against its baseline, maybe alert, and learn from normal values."""
+        """Score one metric against its baseline, maybe alert, and learn from normal values.
+
+        The 60 s window decides whether a metric is elevated. The latest few buckets (`recent`)
+        decide whether it still is, so alerts stop ~15 s after recovery instead of waiting for
+        the spike to leave the window. Baseline learning skips any value with a high window z,
+        so that tail never leaks into the baseline.
+        """
         stats = baseline.stats()
         median = stats[0] if stats else None
         if value is None:
             return {"median": median, "z": None, "anomalous": False}
 
         z = baseline.z(value)
+        elevated = not baseline.warming_up and z >= self.s.z_low
+        still_elevated = (
+            recent is not None and median is not None and recent - median >= min_abs_delta
+        )
         anomalous = (
-            not baseline.warming_up
+            elevated
             and volume >= self.s.min_volume
-            and z >= self.s.z_low
             and median is not None
             and value - median >= min_abs_delta
+            and still_elevated
         )
-        if not anomalous and volume >= self.s.min_volume:
+        if not elevated and volume >= self.s.min_volume:
             baseline.add(value)
 
         if anomalous and can_alert and stats:

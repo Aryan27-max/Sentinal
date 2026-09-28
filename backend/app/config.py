@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     min_volume: int = 20
     min_abs_delta: float = 0.02
     silence_seconds: float = 15.0
+    recent_buckets: int = 3  # an alert also needs the latest 15 s to be elevated
     cooldown_seconds: float = 30.0  # max one alert per (service, detector) unless severity rises
     latency_mad_floor_ms: float = 10.0  # MAD_FLOOR is in error-rate units; latency needs its own
     latency_min_abs_delta_ms: float = 100.0
