@@ -41,6 +41,12 @@ class Settings(BaseSettings):
     min_volume: int = 20
     min_abs_delta: float = 0.02
     silence_seconds: float = 15.0
+    cooldown_seconds: float = 30.0  # max one alert per (service, detector) unless severity rises
+    latency_mad_floor_ms: float = 10.0  # MAD_FLOOR is in error-rate units; latency needs its own
+    latency_min_abs_delta_ms: float = 100.0
+    slow_line_ms: float = 1000.0  # lines slower than this are kept as latency sample lines
+    history_points: int = 120  # chart points kept per series (10 min at 5 s)
+    ping_seconds: float = 20.0
 
     # incidents
     resolve_ticks: int = 3

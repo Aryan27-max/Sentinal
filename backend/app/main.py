@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 from app.api.routes import router
 from app.config import get_settings
+from app.pipeline import Sentinel
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,9 +18,12 @@ log = logging.getLogger("sentinel")
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     settings = get_settings()
-    log.info("Sentinel starting; log file %s", settings.resolved_log_path)
-    # Pipeline tasks (generator, tailer, tick loop, sink dispatcher) start here in Phase 3.
+    sentinel = Sentinel(settings)
+    app.state.sentinel = sentinel
+    log.info("Sentinel starting; tailing %s", settings.resolved_log_path)
+    await sentinel.start()
     yield
+    await sentinel.stop()
     log.info("Sentinel stopped")
 
 
