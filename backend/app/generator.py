@@ -55,9 +55,10 @@ LATENCY_SIGMA = 0.49
 
 
 class Generator:
-    def __init__(self, path: Path, rate: float) -> None:
+    def __init__(self, path: Path, rate: float, max_bytes: int = 50_000_000) -> None:
         self.path = path
         self.rate = rate
+        self.max_bytes = max_bytes
         self.scenario_ends: dict[str, float] = {}  # name -> monotonic end time
 
     # --- scenarios ---
@@ -102,7 +103,9 @@ class Generator:
 
     def _append(self, lines: list[str]) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.path, "a", encoding="utf-8", newline="\n") as f:
+        # Start over once the file gets big; the tailer sees the truncation and resets.
+        mode = "w" if self.path.exists() and self.path.stat().st_size > self.max_bytes else "a"
+        with open(self.path, mode, encoding="utf-8", newline="\n") as f:
             f.write("".join(line + "\n" for line in lines))
 
     async def run(self) -> None:

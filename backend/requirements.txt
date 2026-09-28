@@ -1,4 +1,4 @@
-# runtime
+# runtime only; tests and lint tools are in requirements-dev.txt
 fastapi>=0.115
 uvicorn[standard]>=0.30
 pydantic>=2.7
@@ -7,8 +7,3 @@ drain3>=0.9.11
 boto3>=1.34
 httpx>=0.27
 
-# dev / test
-pytest>=8.2
-pytest-asyncio>=0.23
-moto>=5.0
-ruff>=0.5

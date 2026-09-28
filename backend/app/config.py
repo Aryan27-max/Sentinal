@@ -56,6 +56,10 @@ class Settings(BaseSettings):
     # generator
     generator_enabled: bool = True
     generator_rate: float = 40.0
+    log_max_bytes: int = 50_000_000  # generator truncates the file past this; the tailer copes
+
+    # built dashboard served by FastAPI in production
+    static_dir: Path = Path("../frontend/dist")
 
     # sinks
     dry_run: bool = True
@@ -69,8 +73,15 @@ class Settings(BaseSettings):
 
     @property
     def resolved_log_path(self) -> Path:
-        path = self.log_path
-        return path if path.is_absolute() else (BACKEND_DIR / path).resolve()
+        return _resolve(self.log_path)
+
+    @property
+    def resolved_static_dir(self) -> Path:
+        return _resolve(self.static_dir)
+
+
+def _resolve(path: Path) -> Path:
+    return path if path.is_absolute() else (BACKEND_DIR / path).resolve()
 
 
 @lru_cache

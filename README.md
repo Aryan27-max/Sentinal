@@ -16,7 +16,7 @@ python -m venv .venv
 # Windows PowerShell: .venv\Scripts\Activate.ps1
 # Windows Git Bash:   source .venv/Scripts/activate
 # macOS / Linux:      source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # runtime deps + pytest, moto, ruff
 uvicorn app.main:app --port 8000
 ```
 
@@ -66,6 +66,30 @@ generator ──writes──▶ data/logs/app.log ──▶ tailer ──▶ par
 ## Real SNS / CloudWatch
 
 Copy `.env.example` to `.env` at the repo root and set `DRY_RUN=false`, `SNS_TOPIC_ARN=...`, and `AWS_REGION`. Credentials come from the standard AWS chain (env vars, `~/.aws/credentials`, or SSO). For SMS, subscribe your phone number to the topic. Each message is under 160 characters, for example `Sentinel HIGH: payment-service error rate 18.4% vs 1.8% z=11.1`.
+
+## Deploy to Railway
+
+The repo deploys as **one service**. The [Dockerfile](Dockerfile) builds the React app, and FastAPI serves it alongside `/api` and `/ws` on Railway's `$PORT`. Because the page and API share one origin, WebSockets use `wss://` automatically and no CORS setup is needed. [railway.json](railway.json) sets the Dockerfile builder, a `/api/health` healthcheck, restart on failure, and **1 replica**. Detector state and WebSocket clients live in process memory, so don't scale it out.
+
+1. Push this repo to GitHub.
+2. In Railway, choose **New Project → Deploy from GitHub repo** and pick the repo. It detects `railway.json` and builds the Dockerfile.
+3. Under **Settings → Networking**, click **Generate Domain**.
+4. Optional, for real alerts, set these under **Variables**:
+
+   | Variable | Value |
+   |---|---|
+   | `DRY_RUN` | `false` |
+   | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | an IAM user allowed `sns:Publish` and `logs:CreateLogGroup`, `logs:CreateLogStream`, `logs:PutLogEvents` |
+   | `AWS_REGION` | e.g. `ap-south-1` |
+   | `SNS_TOPIC_ARN` | your topic ARN |
+
+   Any other key in `.env.example` can be overridden the same way.
+
+After each deploy, the first ~60 s show **Learning baseline**. The log file lives on the container's ephemeral disk, and the generator truncates it at `LOG_MAX_BYTES` (50 MB), so it can't fill the disk.
+
+With the CLI instead: `npm i -g @railway/cli && railway login && railway init && railway up`.
+
+To test the image locally (needs Docker running): `docker build -t sentinel . && docker run -p 8000:8000 sentinel`, then open http://localhost:8000.
 
 ## API
 

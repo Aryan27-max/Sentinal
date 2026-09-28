@@ -3,6 +3,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app.api.routes import router
 from app.config import get_settings
@@ -29,3 +30,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="Sentinel", lifespan=lifespan)
 app.include_router(router)
+
+# In production (Docker / Railway) the built dashboard is served from the same origin as /api
+# and /ws. In development Vite serves it instead, so the folder may not exist.
+_static_dir = get_settings().resolved_static_dir
+if _static_dir.is_dir():
+    app.mount("/", StaticFiles(directory=_static_dir, html=True), name="dashboard")

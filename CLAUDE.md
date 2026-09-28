@@ -11,7 +11,7 @@ Real-time log anomaly detector for a hackathon (Codeathon). Read `ARCHITECTURE.m
 ```bash
 # backend
 cd backend && python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # runtime deps + pytest, moto, ruff
 uvicorn app.main:app --reload --port 8000
 pytest -q
 

@@ -24,7 +24,7 @@ class Sentinel:
     def __init__(self, settings: Settings) -> None:
         self.s = settings
         path = settings.resolved_log_path
-        self.generator = Generator(path, settings.generator_rate)
+        self.generator = Generator(path, settings.generator_rate, settings.log_max_bytes)
         self.tailer = Tailer(path, settings.tail_poll_ms, settings.tail_from_start)
         self.detector = Detector(settings)
         self.hub = Hub()
