@@ -50,7 +50,7 @@ function AlertItem({ alert }: { alert: Alert }) {
 export function AlertFeed() {
   const alerts = useSentinel((s) => s.alerts)
   return (
-    <section className="card flex max-h-[640px] flex-col overflow-hidden">
+    <section className="card flex max-h-[640px] min-w-0 flex-col overflow-hidden">
       <div className="flex items-baseline justify-between px-4 pt-4 pb-3 sm:px-5">
         <h2 className="text-[17px] font-semibold tracking-tight">Alerts</h2>
         <span className="text-[13px] text-label-secondary tabular-nums">{alerts.length}</span>

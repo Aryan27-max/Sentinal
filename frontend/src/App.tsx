@@ -65,7 +65,7 @@ export default function App() {
           />
         </div>
 
-        <div className="grid gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
           <LiveChart />
           <AlertFeed />
         </div>

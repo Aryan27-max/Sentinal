@@ -45,7 +45,7 @@ export function LiveChart() {
   }))
 
   return (
-    <section className="card p-4 sm:p-6">
+    <section className="card min-w-0 p-4 sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-[17px] font-semibold tracking-tight">Error rate</h2>
