@@ -1,0 +1,35 @@
+# secrets — only .env.example is committed
+.env
+.env.*
+!.env.example
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+
+# node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# runtime data
+data/logs/*
+!data/logs/.gitkeep
+data/loghub/
+*.log
+
+# drain3 persisted state
+drain3_state.bin
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
